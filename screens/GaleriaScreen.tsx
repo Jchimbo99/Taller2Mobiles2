@@ -20,6 +20,7 @@ const { width } = Dimensions.get('window')
 export default function PerfilScreen({ navigation }: any) {
   const [perfil, setPerfil] = useState<any>(null)
   const [editando, setEditando] = useState(false)
+  
 
   const [nombre, setNombre] = useState('')
   const [apellido, setApellido] = useState('')
@@ -138,12 +139,17 @@ export default function PerfilScreen({ navigation }: any) {
   }
 
   async function cerrarSesion() {
-    await supabase.auth.signOut()
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'HomeScreen' }],
-    })
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    Alert.alert('Error', 'No se pudo cerrar sesión.');
+    return;
   }
+  // Navegar al HomeScreen limpiando el stack
+  navigation.reset({
+    index: 0,
+    routes: [{ name: 'Home' }],
+  });
+}
 
   return (
     <ScrollView

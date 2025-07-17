@@ -1,8 +1,12 @@
-import {Alert,StyleSheet,Text,TextInput,TouchableOpacity,View,Dimensions,ScrollView,} from 'react-native'
+import {Alert,StyleSheet,Text,TextInput,TouchableOpacity,View,Dimensions,ScrollView, GestureResponderEvent,} from 'react-native'
 import React, { useState } from 'react'
 import { MaterialIcons } from '@expo/vector-icons'
 import { supabase } from '../supabase/Config'
 import { Picker } from '@react-native-picker/picker'
+import {  Image } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+
+
 
 const { width } = Dimensions.get('window')
 
@@ -14,100 +18,167 @@ export default function RegistroScreen({ navigation }: any) {
   const [username, setUsername] = useState('')
   const [genero, setGenero] = useState('')
   const [edad, setEdad] = useState('')
+  const [image, setImage] = useState('')
+const [avatarUrl, setAvatarUrl] = useState('')
 
-  async function registro() {
-    const { data, error } = await supabase.auth.signUp({
-      email: correo,
-      password: contrasena,
-      options: {
-        data: {
-          name: nombre,
-          apellido: apellido,
-          username: username,
-        },
-      },
-    })
+const pickImage = async () => {
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 1,
+  })
 
-    if (data.user != null) {
-      await guardar(data.user.id)
-
-      Alert.alert('✅ Registro exitoso', 'Tu cuenta ha sido creada correctamente.', [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('Login'),
-        },
-      ])
-    } else {
-      Alert.alert('❌ Error', error?.message || 'No se pudo registrar.')
-    }
+  if (!result.canceled) {
+    setImage(result.assets[0].uri)
   }
+}
 
-  async function guardar(uid: string) {
-    const { error } = await supabase.from('perfil').insert({
-      id: uid,
-      nombre,
-      apellido,
-      username,
-      edad: Number(edad),
-      genero,
-      correo,
-    })
 
-    if (error) {
-      Alert.alert('❌ No se pudo guardar el perfil', error.message)
+
+ async function registro() {
+  const { data, error } = await supabase.auth.signUp({
+    email: correo,
+    password: contrasena,
+    options: {
+      data: {
+        name: nombre,
+        apellido: apellido,
+        username: username,
+      },
+    },
+  })
+
+  if (data.user != null) {
+    const userId = data.user.id
+
+    let avatarPublicUrl = null
+
+    if (image) {
+      // Subir imagen al bucket
+      const id = Date.now()
+      const fileName = `avatar_${userId}_${id}.png`
+
+      const { error: uploadError } = await supabase.storage
+        .from('registro')
+        .upload(`public/${fileName}`, {
+          uri: image,
+        } as any, {
+          contentType: 'image/png',
+        })
+
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase
+          .storage
+          .from('registro')
+          .getPublicUrl(`public/${fileName}`)
+
+        avatarPublicUrl = publicUrlData.publicUrl
+        setAvatarUrl(avatarPublicUrl)
+      }
     }
+
+    // Guardar en tabla perfil
+    await guardar(userId, avatarPublicUrl)
+
+    Alert.alert('✅ Registro exitoso', 'Tu cuenta ha sido creada correctamente.', [
+      {
+        text: 'OK',
+        onPress: () => navigation.navigate('Login'),
+      },
+    ])
+  } else {
+    Alert.alert('❌ Error', error?.message || 'No se pudo registrar.')
+  }
+}
+
+
+async function guardar(uid: string, avatarUrlParam: string | null) {
+  const { error } = await supabase.from('perfil').insert({
+    id: uid,
+    nombre,
+    apellido,
+    username,
+    edad: Number(edad),
+    genero,
+    correo,
+    avatar_url: avatarUrlParam,
+  })
+
+  if (error) {
+    Alert.alert('❌ No se pudo guardar el perfil', error.message)
+  }
+}
+
+  function subirAvatar(event: GestureResponderEvent): void {
+    throw new Error('Function not implemented.')
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.logoText}>FoodFast 🍔</Text>
-      </View>
+    
+   <ScrollView
+  style={styles.container}
+  contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}
+  showsVerticalScrollIndicator={false}
+>
+  <View style={styles.header}>
+    <Text style={styles.logoText}>FoodFast 🍔</Text>
+  </View>
 
-      <Text style={styles.title}>Crea tu cuenta</Text>
-      <Text style={styles.subtitle}>
-        Regístrate para ordenar, guardar favoritos y más.
-      </Text>
+  <Text style={styles.title}>Crea tu cuenta</Text>
+  <Text style={styles.subtitle}>
+    Regístrate para ordenar, guardar favoritos y más.
+  </Text>
 
-      <View style={styles.form}>
-        <FormInput icon="person" placeholder="Nombre" value={nombre} onChangeText={setNombre} />
-        <FormInput icon="person-outline" placeholder="Apellido" value={apellido} onChangeText={setApellido} />
-        <FormInput icon="alternate-email" placeholder="Username" value={username} onChangeText={setUsername} />
-        <FormInput icon="email" placeholder="Correo electrónico" value={correo} onChangeText={setCorreo} keyboardType="email-address" />
-        <FormInput icon="lock" placeholder="Contraseña" value={contrasena} onChangeText={setContrasena} secureTextEntry />
+ {image ? (
+  <Image source={{ uri: image }} style={styles.avatar} />
+) : (
+  <View style={styles.avatarPlaceholder}>
+    <Text style={{ color: '#e67e22' }}>Sin foto</Text>
+  </View>
+)}
 
-        <Text style={styles.label}>Género</Text>
-        <View style={styles.pickerContainer}>
-          <MaterialIcons name="wc" size={24} color="#e72f2f" style={styles.icon} />
-          <Picker
-            selectedValue={genero}
-            onValueChange={(itemValue: React.SetStateAction<string>) => setGenero(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="-- Selecciona --" value="" />
-            <Picker.Item label="Masculino" value="Masculino" />
-            <Picker.Item label="Femenino" value="Femenino" />
-          </Picker>
-        </View>
 
-        <FormInput icon="calendar-today" placeholder="Edad" value={edad} onChangeText={setEdad} keyboardType="numeric" />
+  <TouchableOpacity style={styles.button} onPress={pickImage}>
+    <Text style={styles.buttonText}>Seleccionar Avatar</Text>
+  </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} activeOpacity={0.85} onPress={registro}>
-          <Text style={styles.buttonIcon}>📝</Text>
-          <Text style={styles.buttonText}>Registrarse</Text>
-        </TouchableOpacity>
+  <View style={styles.form}>
+    <FormInput icon="person" placeholder="Nombre" value={nombre} onChangeText={setNombre} />
+    <FormInput icon="person-outline" placeholder="Apellido" value={apellido} onChangeText={setApellido} />
+    <FormInput icon="alternate-email" placeholder="Username" value={username} onChangeText={setUsername} />
+    <FormInput icon="email" placeholder="Correo electrónico" value={correo} onChangeText={setCorreo} keyboardType="email-address" />
+    <FormInput icon="lock" placeholder="Contraseña" value={contrasena} onChangeText={setContrasena} secureTextEntry />
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
-        </TouchableOpacity>
-      </View>
+    <Text style={styles.label}>Género</Text>
+    <View style={styles.pickerContainer}>
+      <MaterialIcons name="wc" size={24} color="#e72f2f" style={styles.icon} />
+      <Picker
+        selectedValue={genero}
+        onValueChange={(itemValue: React.SetStateAction<string>) => setGenero(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="-- Selecciona --" value="" />
+        <Picker.Item label="Masculino" value="Masculino" />
+        <Picker.Item label="Femenino" value="Femenino" />
+      </Picker>
+    </View>
 
-      <Text style={styles.footer}>© 2025 FoodFast. Todos los derechos reservados.</Text>
-    </ScrollView>
+    <FormInput icon="calendar-today" placeholder="Edad" value={edad} onChangeText={setEdad} keyboardType="numeric" />
+
+    <TouchableOpacity style={styles.button} activeOpacity={0.85} onPress={registro}>
+      <Text style={styles.buttonIcon}>📝</Text>
+      <Text style={styles.buttonText}>Registrarse</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+      <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
+    </TouchableOpacity>
+  </View>
+
+  <Text style={styles.footer}>© 2025 FoodFast. Todos los derechos reservados.</Text>
+</ScrollView>
+
   )
 }
 
@@ -227,4 +298,24 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   footer: { marginTop: 40, color: '#aaa', fontSize: 14, textAlign: 'center' },
+  avatar: {
+  width: 150,
+  height: 150,
+  borderRadius: 75,
+  borderWidth: 3,
+  borderColor: '#e67e22',
+  marginBottom: 20,
+},
+avatarPlaceholder: {
+  width: 150,
+  height: 150,
+  borderRadius: 75,
+  borderWidth: 2,
+  borderColor: '#e67e22',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 20,
+  backgroundColor: '#fff1e0',
+},
+
 })
