@@ -2,7 +2,7 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'; 
 
 
 import RegistroScreen from "../screens/RegistroScreen";
@@ -13,6 +13,7 @@ import NuevoPedidoScreen from "../screens/NuevoPedidoScreen";
 import GaleriaScreen from "../screens/GaleriaScreen";
 import CatalogoScreen from "../screens/ProductosScreen"; 
 import RestablecerScreen from "../screens/RestablecerScreen";
+import MapaScreen from "../screens/MapaScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -25,24 +26,47 @@ function CatalogoTabs() {
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarIcon: ({ color, size }) => {
-                    let iconName: React.ComponentProps<typeof MaterialIcons>['name'];
-
                     if (route.name === 'Catalogo') {
-                        iconName = 'storefront';
+                        return (
+                            <MaterialIcons
+                                name="storefront"
+                                size={size}
+                                color={color}
+                            />
+                        );
                     } else if (route.name === 'Perfil') {
-                        iconName = 'person';
+                        return (
+                            <MaterialIcons
+                                name="person"
+                                size={size}
+                                color={color}
+                            />
+                        );
+                    } else if (route.name === 'Ubicación') {
+                        return (
+                            <MaterialCommunityIcons
+                                name="google-maps"
+                                size={size}
+                                color={color}
+                            />
+                        );
                     } else {
-                        iconName = 'help'; 
+                        return (
+                            <MaterialIcons
+                                name="help"
+                                size={size}
+                                color={color}
+                            />
+                        );
                     }
-
-                    return <MaterialIcons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: '#e67e22',
                 tabBarInactiveTintColor: 'gray',
             })}
         >
             <Tab.Screen name="Catalogo" component={CatalogoScreen} options={{ title: 'Catálogo' }} />
-            <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
+            <Tab.Screen name="Perfil" component={GaleriaScreen} options={{ title: 'Perfil' }} />
+            <Tab.Screen name="Ubicación" component={MapaScreen} options={{ title: 'Ubicación' }} />
         </Tab.Navigator>
     );
 }

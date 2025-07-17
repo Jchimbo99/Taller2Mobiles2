@@ -20,10 +20,17 @@
         "foregroundImage": "./assets/images/logo.jpg",
         "backgroundColor": "#fcdc97f5"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.jchimbo.FoodFast"
     },
     "web": {
       "favicon": "./assets/images/logo.jpg"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ad3da6fa-9e15-4eb9-afb3-232b821ecc1c"
+      }
+    },
+    "owner": "jchimbo"
   }
 }
