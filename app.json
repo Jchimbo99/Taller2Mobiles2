@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.jpg",
         "backgroundColor": "#fcdc97f5"
@@ -31,6 +32,9 @@
         "projectId": "ad3da6fa-9e15-4eb9-afb3-232b821ecc1c"
       }
     },
-    "owner": "jchimbo"
+    "owner": "jchimbo",
+    "cli": {
+      "appVersionSource": "project"
+    }
   }
 }

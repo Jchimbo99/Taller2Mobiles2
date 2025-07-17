@@ -1,129 +1,124 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Button, Platform, Linking } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/Config';
+
+type Location = {
+    latitude: number;
+    longitude: number;
+    direccion: string;
+};
 
 export default function MapaScreen() {
-    const latitude = -2.2244302;
-    const longitude = -79.8987661;
+    const [location, setLocation] = useState<Location>({
+        latitude: -0.2526,
+        longitude: -78.5224,
+        direccion: "Cargando...",
+    });
 
-    const mapRef = useRef<MapView | null>(null);
+    const mapRef = useRef<MapView>(null);
 
-    const abrirEnGoogleMaps = () => {
-        const url = Platform.select({
-            ios: `maps://?daddr=${latitude},${longitude}&directionsmode=walking`,
-            android: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=walking`,
-        });
+    useEffect(() => {
+        const fetchLocation = async () => {
+            const docRef = doc(db, "config", "ubicacion");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data() as Location;
+                setLocation({
+                    latitude: data.latitude,
+                    longitude: data.longitude,
+                    direccion: data.direccion,
+                });
+            }
+        };
+        fetchLocation();
+    }, []);
 
-        if (url) {
-            Linking.openURL(url).catch(() =>
-                alert('No se pudo abrir Google Maps')
-            );
-        }
-    };
-
-    const centrarEnUbicacion = () => {
+    const centerMap = () => {
         if (mapRef.current) {
             mapRef.current.animateToRegion({
-                latitude,
-                longitude,
-                latitudeDelta: 0.001,
-                longitudeDelta: 0.001,
-            }, 1000);
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.002,
+                longitudeDelta: 0.002,
+            });
         }
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.logoText}>
-                    FoodFast <Text>🍔</Text>
-                </Text>
+                <Text style={styles.title}>Ubicación del Negocio</Text>
+                <Text style={styles.address}>{location.direccion}</Text>
             </View>
-
-            <Text style={styles.title}>Nuestra Ubicación</Text>
-            <Text style={styles.subtitle}>Aquí puedes ver nuestra ubicación exacta en el mapa.</Text>
 
             <MapView
                 ref={mapRef}
-                style={styles.mapa}
-                initialRegion={{
-                    latitude,
-                    longitude,
-                    latitudeDelta: 0.001,
-                    longitudeDelta: 0.001,
+                style={styles.map}
+                region={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.002,
+                    longitudeDelta: 0.002,
                 }}
             >
                 <Marker
-                    coordinate={{ latitude, longitude }}
-                    title="FoodFast Las Acacias"
-                    description="Portoviejo, Ecuador"
+                    coordinate={{
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                    }}
+                    title="Ubicación actual"
+                    description={location.direccion}
                 />
             </MapView>
 
-            <View style={styles.botonContainer}>
-                <Button
-                    title="📍 Abrir en Google Maps"
-                    onPress={abrirEnGoogleMaps}
-                    color="#e72f2f"
-                />
-                <View style={{ height: 10 }} />
-                <Button
-                    title="🎯 Centrar Ubicación"
-                    onPress={centrarEnUbicacion}
-                    color="#4CAF50"
-                />
-            </View>
-        </View>
+            {/* Botón para centrar la ubicación */}
+            <TouchableOpacity style={styles.centerButton} onPress={centerMap}>
+                <Text style={styles.centerIcon}>🍔</Text>
+            </TouchableOpacity>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff5f0',
+        backgroundColor: '#f6f8fa',
     },
     header: {
-        width: '100%',
-        height: 140,
-        backgroundColor: '#e72f2f',
-        justifyContent: 'center',
+        padding: 16,
+        backgroundColor: '#0a3d62',
         alignItems: 'center',
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        shadowColor: '#e72f2f',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
-        elevation: 8,
-    },
-    logoText: {
-        color: 'white',
-        fontSize: 34,
-        fontWeight: '900',
-        letterSpacing: 2,
     },
     title: {
-        fontSize: 24,
-        fontWeight: '800',
-        color: '#222',
-        marginTop: 20,
-        textAlign: 'center',
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: 'white',
     },
-    subtitle: {
-        fontSize: 16,
-        color: '#555',
-        textAlign: 'center',
-        marginBottom: 10,
-        paddingHorizontal: 20,
+    address: {
+        marginTop: 4,
+        fontSize: 14,
+        color: 'white',
     },
-    mapa: {
+    map: {
         flex: 1,
-        marginHorizontal: 10,
-        borderRadius: 15,
-        overflow: 'hidden',
     },
-    botonContainer: {
-        padding: 20,
-        backgroundColor: '#fff5f0',
+    centerButton: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        backgroundColor: '#e67e22',
+        borderRadius: 30,
+        padding: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+    centerIcon: {
+        fontSize: 24,
+        color: '#fff',
     },
 });
