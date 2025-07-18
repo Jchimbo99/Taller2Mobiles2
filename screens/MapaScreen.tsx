@@ -1,6 +1,7 @@
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, Linking, Alert } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
+
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/Config';
 
