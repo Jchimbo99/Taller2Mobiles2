@@ -4,11 +4,11 @@
     "slug": "Food-Fast",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.jpg",
+    "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/logo.jpg",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#f79850f5"
     },
@@ -16,16 +16,21 @@
       "supportsTablet": true
     },
     "android": {
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.jpg",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#fcdc97f5"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.jchimbo.FoodFast"
     },
     "web": {
-      "favicon": "./assets/images/logo.jpg"
+      "favicon": "./assets/images/logo.png"
     },
     "extra": {
       "eas": {
@@ -33,8 +38,11 @@
       }
     },
     "owner": "jchimbo",
-    "cli": {
-      "appVersionSource": "project"
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ad3da6fa-9e15-4eb9-afb3-232b821ecc1c"
     }
   }
 }
